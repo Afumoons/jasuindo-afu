@@ -15,6 +15,16 @@ it('renders the coupon production page', function () {
         );
 });
 
+it('includes a toggleable non-winning coupon filter in the generated batch view', function () {
+    $pageSource = file_get_contents(resource_path('js/pages/coupon-production.tsx'));
+
+    expect($pageSource)
+        ->toContain('Tampilkan kupon non-hadiah')
+        ->toContain('showNonWinningCoupons')
+        ->toContain('batch.report_coupons.filter')
+        ->toContain('coupon.prize_amount > 0');
+});
+
 it('generates production batches, boxes, coupons, and usage status', function () {
     $this->post('/coupon-production', [
         'batch_1_operator' => 'Amir',

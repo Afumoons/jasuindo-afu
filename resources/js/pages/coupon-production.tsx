@@ -10,6 +10,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -415,88 +416,136 @@ export default function CouponProduction() {
 }
 
 function BatchOverallReport({ batches }: { batches: ProductionBatch[] }) {
+    const [showNonWinningCoupons, setShowNonWinningCoupons] = useState(false);
+
     return (
         <Card>
             <CardHeader>
-                <CardTitle>View Per Batch Keseluruhan</CardTitle>
-                <CardDescription>
-                    Tampilan generated seperti format laporan cetak: setiap
-                    batch menampilkan identitas produksi dan seluruh kupon dari
-                    box yang termasuk batch tersebut.
-                </CardDescription>
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                        <CardTitle>View Per Batch Keseluruhan</CardTitle>
+                        <CardDescription>
+                            Tampilan generated seperti format laporan cetak:
+                            setiap batch menampilkan identitas produksi dan
+                            seluruh kupon dari box yang termasuk batch tersebut.
+                        </CardDescription>
+                    </div>
+                    <label className="flex items-start gap-3 rounded-xl border bg-muted/30 p-3 text-sm">
+                        <Checkbox
+                            checked={showNonWinningCoupons}
+                            onCheckedChange={(checked) =>
+                                setShowNonWinningCoupons(checked === true)
+                            }
+                            aria-label="Tampilkan kupon non-hadiah"
+                        />
+                        <span>
+                            <span className="block font-medium">
+                                Tampilkan kupon non-hadiah
+                            </span>
+                            <span className="block text-xs text-muted-foreground">
+                                Mati: hanya kupon berhadiah. Nyala: tampilkan
+                                semua kupon termasuk “Anda Belum Beruntung”.
+                            </span>
+                        </span>
+                    </label>
+                </div>
             </CardHeader>
             <CardContent className="space-y-6">
-                {batches.map((batch) => (
-                    <div
-                        key={batch.id}
-                        className="overflow-hidden rounded-xl border border-[#1b1b18]/40 bg-white text-[#1b1b18] dark:border-[#EDEDEC]/40 dark:bg-[#0f0f0f] dark:text-[#EDEDEC]"
-                    >
-                        <div className="grid grid-cols-[150px_1fr] border-b border-[#1b1b18]/40 text-sm dark:border-[#EDEDEC]/40">
-                            <BatchMeta
-                                label="No Batch"
-                                value={batch.batch_number}
-                            />
-                            <BatchMeta
-                                label="Nama Operator"
-                                value={batch.operator_name}
-                            />
-                            <BatchMeta label="Lokasi" value={batch.location} />
-                            <BatchMeta
-                                label="Tanggal / Jam"
-                                value={batch.produced_at}
-                            />
-                        </div>
+                {batches.map((batch) => {
+                    const reportCoupons = showNonWinningCoupons
+                        ? batch.report_coupons
+                        : batch.report_coupons.filter(
+                              (coupon) => coupon.prize_amount > 0,
+                          );
 
-                        <div className="max-h-[620px] overflow-auto">
-                            <table className="w-full border-collapse text-center text-sm">
-                                <thead className="sticky top-0 bg-[#FDFDFC] dark:bg-[#161615]">
-                                    <tr>
-                                        <th className="border-r border-b border-[#1b1b18]/40 px-3 py-1.5 font-semibold dark:border-[#EDEDEC]/40">
-                                            No Box
-                                        </th>
-                                        <th className="border-r border-b border-[#1b1b18]/40 px-3 py-1.5 font-semibold dark:border-[#EDEDEC]/40">
-                                            No Kupon
-                                        </th>
-                                        <th className="border-r border-b border-[#1b1b18]/40 px-3 py-1.5 font-semibold dark:border-[#EDEDEC]/40">
-                                            Nominal
-                                        </th>
-                                        <th className="border-b border-[#1b1b18]/40 px-3 py-1.5 font-semibold dark:border-[#EDEDEC]/40">
-                                            Keterangan
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {batch.report_coupons.map((coupon) => (
-                                        <tr key={coupon.id}>
-                                            <td className="border-r border-b border-[#1b1b18]/25 px-3 py-1.5 dark:border-[#EDEDEC]/25">
-                                                {coupon.box_number}
-                                            </td>
-                                            <td className="border-r border-b border-[#1b1b18]/25 px-3 py-1.5 font-mono dark:border-[#EDEDEC]/25">
-                                                {coupon.serial_number}
-                                            </td>
-                                            <td className="border-r border-b border-[#1b1b18]/25 px-3 py-1.5 dark:border-[#EDEDEC]/25">
-                                                {formatCurrency(
-                                                    coupon.prize_amount,
-                                                )}
-                                            </td>
-                                            <td className="border-b border-[#1b1b18]/25 px-3 py-1.5 dark:border-[#EDEDEC]/25">
-                                                {coupon.description}
+                    return (
+                        <div
+                            key={batch.id}
+                            className="overflow-hidden rounded-xl border border-[#1b1b18]/40 bg-white text-[#1b1b18] dark:border-[#EDEDEC]/40 dark:bg-[#0f0f0f] dark:text-[#EDEDEC]"
+                        >
+                            <div className="grid grid-cols-[150px_1fr] border-b border-[#1b1b18]/40 text-sm dark:border-[#EDEDEC]/40">
+                                <BatchMeta
+                                    label="No Batch"
+                                    value={batch.batch_number}
+                                />
+                                <BatchMeta
+                                    label="Nama Operator"
+                                    value={batch.operator_name}
+                                />
+                                <BatchMeta
+                                    label="Lokasi"
+                                    value={batch.location}
+                                />
+                                <BatchMeta
+                                    label="Tanggal / Jam"
+                                    value={batch.produced_at}
+                                />
+                            </div>
+
+                            <div className="border-b border-[#1b1b18]/25 px-3 py-2 text-xs text-muted-foreground dark:border-[#EDEDEC]/25">
+                                Menampilkan{' '}
+                                {currencyFormatter.format(reportCoupons.length)}{' '}
+                                dari{' '}
+                                {currencyFormatter.format(
+                                    batch.report_coupons.length,
+                                )}{' '}
+                                kupon
+                                {showNonWinningCoupons
+                                    ? ' termasuk non-hadiah.'
+                                    : ' berhadiah saja.'}
+                            </div>
+
+                            <div className="max-h-[620px] overflow-auto">
+                                <table className="w-full border-collapse text-center text-sm">
+                                    <thead className="sticky top-0 bg-[#FDFDFC] dark:bg-[#161615]">
+                                        <tr>
+                                            <th className="border-r border-b border-[#1b1b18]/40 px-3 py-1.5 font-semibold dark:border-[#EDEDEC]/40">
+                                                No Box
+                                            </th>
+                                            <th className="border-r border-b border-[#1b1b18]/40 px-3 py-1.5 font-semibold dark:border-[#EDEDEC]/40">
+                                                No Kupon
+                                            </th>
+                                            <th className="border-r border-b border-[#1b1b18]/40 px-3 py-1.5 font-semibold dark:border-[#EDEDEC]/40">
+                                                Nominal
+                                            </th>
+                                            <th className="border-b border-[#1b1b18]/40 px-3 py-1.5 font-semibold dark:border-[#EDEDEC]/40">
+                                                Keterangan
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {reportCoupons.map((coupon) => (
+                                            <tr key={coupon.id}>
+                                                <td className="border-r border-b border-[#1b1b18]/25 px-3 py-1.5 dark:border-[#EDEDEC]/25">
+                                                    {coupon.box_number}
+                                                </td>
+                                                <td className="border-r border-b border-[#1b1b18]/25 px-3 py-1.5 font-mono dark:border-[#EDEDEC]/25">
+                                                    {coupon.serial_number}
+                                                </td>
+                                                <td className="border-r border-b border-[#1b1b18]/25 px-3 py-1.5 dark:border-[#EDEDEC]/25">
+                                                    {formatCurrency(
+                                                        coupon.prize_amount,
+                                                    )}
+                                                </td>
+                                                <td className="border-b border-[#1b1b18]/25 px-3 py-1.5 dark:border-[#EDEDEC]/25">
+                                                    {coupon.description}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        <tr>
+                                            <td
+                                                colSpan={4}
+                                                className="px-3 py-1.5 text-center text-sm text-muted-foreground italic"
+                                            >
+                                                dan seterusnya...
                                             </td>
                                         </tr>
-                                    ))}
-                                    <tr>
-                                        <td
-                                            colSpan={4}
-                                            className="px-3 py-1.5 text-center text-sm text-muted-foreground italic"
-                                        >
-                                            dan seterusnya...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </CardContent>
         </Card>
     );
