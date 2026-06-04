@@ -21,6 +21,10 @@ type Coupon = {
     status: 'belum_terpakai' | 'terpakai';
 };
 
+type ReportCoupon = Coupon & {
+    box_number: number;
+};
+
 type CouponBox = {
     id: number;
     box_number: number;
@@ -43,6 +47,7 @@ type ProductionBatch = {
     total_coupons: number;
     total_winning_coupons: number;
     total_prize_amount: number;
+    report_coupons: ReportCoupon[];
     boxes: CouponBox[];
 };
 
@@ -90,6 +95,7 @@ export default function CouponProduction() {
     const { batches, requirements, flash } = usePage<PageProps>().props;
     const [form, setForm] = useState<ProductionForm>(defaultForm);
     const [selectedBoxNumber, setSelectedBoxNumber] = useState<number>(1);
+    const [viewMode, setViewMode] = useState<'batch' | 'box'>('batch');
     const [processing, setProcessing] = useState(false);
 
     const boxes = useMemo(
@@ -336,7 +342,41 @@ export default function CouponProduction() {
                         />
                     </section>
 
-                    <section className="space-y-6">
+                    <section className="space-y-4">
+                        <div className="flex flex-col gap-3 rounded-2xl border border-[#19140020] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-[#3E3E3A] dark:bg-[#161615]">
+                            <div>
+                                <h2 className="text-lg font-semibold">
+                                    Tampilan Data Generated
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Pilih laporan keseluruhan per batch atau
+                                    detail per box yang sudah ada.
+                                </p>
+                            </div>
+                            <div className="inline-flex rounded-xl border bg-muted/40 p-1">
+                                <Button
+                                    type="button"
+                                    variant={
+                                        viewMode === 'batch'
+                                            ? 'default'
+                                            : 'ghost'
+                                    }
+                                    onClick={() => setViewMode('batch')}
+                                >
+                                    View Per Batch
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={
+                                        viewMode === 'box' ? 'default' : 'ghost'
+                                    }
+                                    onClick={() => setViewMode('box')}
+                                >
+                                    View Per Box
+                                </Button>
+                            </div>
+                        </div>
+
                         {batches.length === 0 ? (
                             <Card>
                                 <CardContent className="py-10 text-center text-sm text-muted-foreground">
@@ -345,97 +385,202 @@ export default function CouponProduction() {
                                     batch.
                                 </CardContent>
                             </Card>
+                        ) : viewMode === 'batch' ? (
+                            <BatchOverallReport batches={batches} />
                         ) : (
-                            batches.map((batch) => (
-                                <BatchReport
-                                    key={batch.id}
-                                    batch={batch}
-                                    selectedBoxNumber={selectedBoxNumber}
-                                    onSelectBox={setSelectedBoxNumber}
-                                />
-                            ))
+                            <>
+                                <section className="space-y-6">
+                                    {batches.map((batch) => (
+                                        <BatchReport
+                                            key={batch.id}
+                                            batch={batch}
+                                            selectedBoxNumber={
+                                                selectedBoxNumber
+                                            }
+                                            onSelectBox={setSelectedBoxNumber}
+                                        />
+                                    ))}
+                                </section>
+
+                                {selectedBox ? (
+                                    <BoxCouponDetail box={selectedBox} />
+                                ) : null}
+                            </>
                         )}
                     </section>
-
-                    {selectedBox ? (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>
-                                    Detail Kupon Box {selectedBox.box_number}
-                                </CardTitle>
-                                <CardDescription>
-                                    Nomor {selectedBox.serial_start} sampai{' '}
-                                    {selectedBox.serial_end}. Menampilkan semua{' '}
-                                    {selectedBox.total_coupons} kupon dalam box
-                                    terpilih.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="max-h-[560px] overflow-auto rounded-xl border">
-                                    <table className="w-full text-left text-sm">
-                                        <thead className="sticky top-0 bg-muted text-muted-foreground">
-                                            <tr>
-                                                <th className="px-4 py-3 font-medium">
-                                                    No Kupon
-                                                </th>
-                                                <th className="px-4 py-3 font-medium">
-                                                    Nominal
-                                                </th>
-                                                <th className="px-4 py-3 font-medium">
-                                                    Keterangan
-                                                </th>
-                                                <th className="px-4 py-3 font-medium">
-                                                    Status
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {selectedBox.coupons.map(
-                                                (coupon) => (
-                                                    <tr
-                                                        key={coupon.id}
-                                                        className="border-t"
-                                                    >
-                                                        <td className="px-4 py-2 font-mono">
-                                                            {
-                                                                coupon.serial_number
-                                                            }
-                                                        </td>
-                                                        <td className="px-4 py-2">
-                                                            {formatCurrency(
-                                                                coupon.prize_amount,
-                                                            )}
-                                                        </td>
-                                                        <td className="px-4 py-2 text-muted-foreground">
-                                                            {coupon.description}
-                                                        </td>
-                                                        <td className="px-4 py-2">
-                                                            <Badge
-                                                                variant={
-                                                                    coupon.status ===
-                                                                    'terpakai'
-                                                                        ? 'secondary'
-                                                                        : 'outline'
-                                                                }
-                                                            >
-                                                                {coupon.status ===
-                                                                'terpakai'
-                                                                    ? 'Terpakai'
-                                                                    : 'Belum Terpakai'}
-                                                            </Badge>
-                                                        </td>
-                                                    </tr>
-                                                ),
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ) : null}
                 </main>
             </div>
         </>
+    );
+}
+
+function BatchOverallReport({ batches }: { batches: ProductionBatch[] }) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>View Per Batch Keseluruhan</CardTitle>
+                <CardDescription>
+                    Tampilan generated seperti format laporan cetak: setiap
+                    batch menampilkan identitas produksi dan seluruh kupon dari
+                    box yang termasuk batch tersebut.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                {batches.map((batch) => (
+                    <div
+                        key={batch.id}
+                        className="overflow-hidden rounded-xl border border-[#1b1b18]/40 bg-white text-[#1b1b18] dark:border-[#EDEDEC]/40 dark:bg-[#0f0f0f] dark:text-[#EDEDEC]"
+                    >
+                        <div className="grid grid-cols-[150px_1fr] border-b border-[#1b1b18]/40 text-sm dark:border-[#EDEDEC]/40">
+                            <BatchMeta
+                                label="No Batch"
+                                value={batch.batch_number}
+                            />
+                            <BatchMeta
+                                label="Nama Operator"
+                                value={batch.operator_name}
+                            />
+                            <BatchMeta label="Lokasi" value={batch.location} />
+                            <BatchMeta
+                                label="Tanggal / Jam"
+                                value={batch.produced_at}
+                            />
+                        </div>
+
+                        <div className="max-h-[620px] overflow-auto">
+                            <table className="w-full border-collapse text-center text-sm">
+                                <thead className="sticky top-0 bg-[#FDFDFC] dark:bg-[#161615]">
+                                    <tr>
+                                        <th className="border-r border-b border-[#1b1b18]/40 px-3 py-1.5 font-semibold dark:border-[#EDEDEC]/40">
+                                            No Box
+                                        </th>
+                                        <th className="border-r border-b border-[#1b1b18]/40 px-3 py-1.5 font-semibold dark:border-[#EDEDEC]/40">
+                                            No Kupon
+                                        </th>
+                                        <th className="border-r border-b border-[#1b1b18]/40 px-3 py-1.5 font-semibold dark:border-[#EDEDEC]/40">
+                                            Nominal
+                                        </th>
+                                        <th className="border-b border-[#1b1b18]/40 px-3 py-1.5 font-semibold dark:border-[#EDEDEC]/40">
+                                            Keterangan
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {batch.report_coupons.map((coupon) => (
+                                        <tr key={coupon.id}>
+                                            <td className="border-r border-b border-[#1b1b18]/25 px-3 py-1.5 dark:border-[#EDEDEC]/25">
+                                                {coupon.box_number}
+                                            </td>
+                                            <td className="border-r border-b border-[#1b1b18]/25 px-3 py-1.5 font-mono dark:border-[#EDEDEC]/25">
+                                                {coupon.serial_number}
+                                            </td>
+                                            <td className="border-r border-b border-[#1b1b18]/25 px-3 py-1.5 dark:border-[#EDEDEC]/25">
+                                                {formatCurrency(
+                                                    coupon.prize_amount,
+                                                )}
+                                            </td>
+                                            <td className="border-b border-[#1b1b18]/25 px-3 py-1.5 dark:border-[#EDEDEC]/25">
+                                                {coupon.description}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    <tr>
+                                        <td
+                                            colSpan={4}
+                                            className="px-3 py-1.5 text-center text-sm text-muted-foreground italic"
+                                        >
+                                            dan seterusnya...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
+    );
+}
+
+function BatchMeta({
+    label,
+    value,
+}: {
+    label: string;
+    value: string | number;
+}) {
+    return (
+        <>
+            <div className="border-r border-[#1b1b18]/40 px-3 py-1 font-semibold dark:border-[#EDEDEC]/40">
+                {label}:
+            </div>
+            <div className="px-3 py-1">{value}</div>
+        </>
+    );
+}
+
+function BoxCouponDetail({ box }: { box: CouponBox }) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Detail Kupon Box {box.box_number}</CardTitle>
+                <CardDescription>
+                    Nomor {box.serial_start} sampai {box.serial_end}.
+                    Menampilkan semua {box.total_coupons} kupon dalam box
+                    terpilih.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="max-h-[560px] overflow-auto rounded-xl border">
+                    <table className="w-full text-left text-sm">
+                        <thead className="sticky top-0 bg-muted text-muted-foreground">
+                            <tr>
+                                <th className="px-4 py-3 font-medium">
+                                    No Kupon
+                                </th>
+                                <th className="px-4 py-3 font-medium">
+                                    Nominal
+                                </th>
+                                <th className="px-4 py-3 font-medium">
+                                    Keterangan
+                                </th>
+                                <th className="px-4 py-3 font-medium">
+                                    Status
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {box.coupons.map((coupon) => (
+                                <tr key={coupon.id} className="border-t">
+                                    <td className="px-4 py-2 font-mono">
+                                        {coupon.serial_number}
+                                    </td>
+                                    <td className="px-4 py-2">
+                                        {formatCurrency(coupon.prize_amount)}
+                                    </td>
+                                    <td className="px-4 py-2 text-muted-foreground">
+                                        {coupon.description}
+                                    </td>
+                                    <td className="px-4 py-2">
+                                        <Badge
+                                            variant={
+                                                coupon.status === 'terpakai'
+                                                    ? 'secondary'
+                                                    : 'outline'
+                                            }
+                                        >
+                                            {coupon.status === 'terpakai'
+                                                ? 'Terpakai'
+                                                : 'Belum Terpakai'}
+                                        </Badge>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </CardContent>
+        </Card>
     );
 }
 

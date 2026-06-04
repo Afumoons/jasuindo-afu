@@ -50,6 +50,12 @@ it('generates production batches, boxes, coupons, and usage status', function ()
             ->has('batches', 2)
             ->has('batches.0.boxes', 5)
             ->has('batches.0.boxes.0.coupons', 1000)
+            ->has('batches.0.report_coupons', 5000)
+            ->has('batches.1.report_coupons', 5000)
+            ->where('batches.0.report_coupons.0.box_number', 1)
+            ->where('batches.0.report_coupons.0.serial_number', '00001')
+            ->where('batches.0.report_coupons.0.status', 'belum_terpakai')
+            ->where('batches.1.report_coupons.0.box_number', 6)
             ->where('batches.0.boxes.0.coupons.0.status', 'belum_terpakai')
         );
 });

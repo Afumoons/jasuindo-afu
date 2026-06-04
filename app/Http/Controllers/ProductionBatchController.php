@@ -30,6 +30,17 @@ class ProductionBatchController extends Controller
                 'total_coupons' => $batch->total_coupons,
                 'total_winning_coupons' => $batch->total_winning_coupons,
                 'total_prize_amount' => $batch->total_prize_amount,
+                'report_coupons' => $batch->boxes
+                    ->flatMap(fn ($box) => $box->coupons->map(fn ($coupon): array => [
+                        'id' => $coupon->id,
+                        'box_number' => $box->box_number,
+                        'serial_number' => $coupon->serial_number,
+                        'prize_amount' => $coupon->prize_amount,
+                        'description' => $coupon->description,
+                        'status' => $coupon->status,
+                    ]))
+                    ->values()
+                    ->all(),
                 'boxes' => $batch->boxes->map(fn ($box): array => [
                     'id' => $box->id,
                     'box_number' => $box->box_number,
